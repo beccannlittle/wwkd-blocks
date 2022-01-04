@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <canvas id="renderCanvas" style="width:100%;height:100%"></canvas>
+  
+  <script src="https://cdn.babylonjs.com/babylon.js"></script>
+  <script src="https://preview.babylonjs.com/gui/babylon.gui.js"></script>
+  <script>
+
+    const constructFoundations = function(scene) {
+      const concreteMat = new BABYLON.StandardMaterial("myMaterial", scene);
+      concreteMat.diffuseColor = BABYLON.Color3.FromHexString("#b3a690")
+
+      const base = BABYLON.MeshBuilder.CreateBox("base", {width: 10, height: 1, depth: 17.5}, scene)
+      base.material = concreteMat
+      const pillars = []
+      for (let i = 0; i <8; i++) {
+        const pillar = (BABYLON.MeshBuilder.CreateBox("pillar", {width: 0.5, height: 5.25, depth: 0.5}, scene))
+        pillar.material = concreteMat
+        pillars.push(pillar)
+      }
+      pillars[0].position = new BABYLON.Vector3(-4.75, 3.125, -8.5)
+      pillars[1].position = new BABYLON.Vector3(4.75, 3.125, -8.5)
+      
+      pillars[2].position = new BABYLON.Vector3(-4.75, 3.125, -3.8)
+      pillars[3].position = new BABYLON.Vector3(4.75, 3.125, -3.8)
+      
+      pillars[4].position = new BABYLON.Vector3(-4.75, 3.125, 3.8)
+      pillars[5].position = new BABYLON.Vector3(4.75, 3.125, 3.8)
+      
+      pillars[6].position = new BABYLON.Vector3(-4.75, 3.125, 8.5)
+      pillars[7].position = new BABYLON.Vector3(4.75, 3.125, 8.5)
+
+      const tall1 = BABYLON.MeshBuilder.CreateBox("tall", {width: 0.5, height: 8.25, depth: 0.5}, scene)
+      tall1.position = new BABYLON.Vector3(0, 4.625, -8.5)
+      tall1.material = concreteMat
+      const tall2 = BABYLON.MeshBuilder.CreateBox("tall", {width: 0.5, height: 8.25, depth: 0.5}, scene)
+      tall2.position = new BABYLON.Vector3(0, 4.625, 8.5)
+      tall2.material = concreteMat
+      
+      const cross1 = BABYLON.MeshBuilder.CreateBox("cross", {width: 4.5, height: 0.5, depth: 0.5}, scene)
+      cross1.position = new BABYLON.Vector3(2.25, 5.5, -8.5)
+      cross1.material = concreteMat
+      const cross2 = BABYLON.MeshBuilder.CreateBox("cross", {width: 0.5, height: 0.5, depth: 4.5}, scene)
+      cross2.position = new BABYLON.Vector3(4.75, 5.5, -6)
+      cross2.material = concreteMat
+      
+      const stair1 = BABYLON.MeshBuilder.CreateBox("stair", {width: 2, height: 0.75, depth: 0.5}, scene)
+      stair1.position = new BABYLON.Vector3(2.45, -0.125, -9)
+      stair1.material = concreteMat
+      const stair2 = BABYLON.MeshBuilder.CreateBox("stair", {width: 2, height: 0.5, depth: 0.5}, scene)
+      stair2.position = new BABYLON.Vector3(2.45, -0.25, -9.5)
+      stair2.material = concreteMat
+      const stair3 = BABYLON.MeshBuilder.CreateBox("stair", {width: 2, height: 0.25, depth: 0.5}, scene)
+      stair3.position = new BABYLON.Vector3(2.45, -0.375, -10)
+      stair3.material = concreteMat
+
+      const roofMat = new BABYLON.StandardMaterial("myMaterial", scene);
+      roofMat.diffuseColor = BABYLON.Color3.FromHexString("#dbeefd")
+
+      const roof = BABYLON.MeshBuilder.CreateBox("block", {height: 0.1, width: 7, depth: 18}, scene)
+      roof.position = new BABYLON.Vector3(2.85, 7.2, 0)
+      roof.rotation.z = -(35 * Math.PI) / 180
+      roof.material = roofMat
+      const roof2 = BABYLON.MeshBuilder.CreateBox("block", {height: 0.1, width: 7, depth: 18}, scene)
+      roof2.position = new BABYLON.Vector3(-2.85, 7.2, 0)
+      roof2.rotation.z = (35 * Math.PI) / 180
+      roof2.material = roofMat
+    }
+
+    let blocksText
+    const createGUI = function() {
+      const advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI")
+
+      const textArea = new BABYLON.GUI.Rectangle()
+      textArea.thickness = 0
+      textArea.width = 1
+      textArea.height = .25
+      
+      advancedTexture.addControl(textArea)
+      textArea.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT
+      textArea.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM
+
+      blocksText = new BABYLON.GUI.TextBlock()
+      blocksText.left = 5
+      blocksText.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT
+      blocksText.textVerticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM
+      blocksText.text = "Blocks Funded"
+      blocksText.color = "white"
+      blocksText.fontSize = 24
+      textArea.addControl(blocksText)
+    }
+
+    const facing = {height:0.35, width:1, depth:0.35}
+    const facingOffset = {height:0.35, width:0.5, depth:0.35}
+    const sides = {height:0.35, width:0.35, depth:1}
+    const sidesOffset = {height:0.35, width:0.35, depth:0.5}
+
+    const entryBlockData = [
+      { size: facing, x: 3.95, z: -8.5 },
+      { size: facing, x: 0.8, z: -8.5 },
+      { size: sides, x: 4.75, z: -4.55 },
+      { size: sides, x: 4.75, z: -7.7 },
+      { size: sides, x: 0, z: -4.55 },
+      { size: sides, x: 0, z: -7.7 },
+
+      { size: facingOffset, x: 0, z: -3.8 },
+      { size: facing, x: 0.8, z: -3.8 },
+      { size: facing, x: 1.85, z: -3.8 },
+      { size: facing, x: 2.9, z: -3.8 },
+      { size: facing, x: 3.95, z: -3.8 },
+    ]
+
+    const entryBlockDataOffset = [
+      { size: facing, x: 3.95, z: -8.5 },
+      { size: facing, x: 0.8, z: -8.5 },
+      { size: sides, x: 4.75, z: -4.55 },
+      { size: sides, x: 4.75, z: -7.7 },
+      { size: sides, x: 0, z: -4.55 },
+      { size: sides, x: 0, z: -7.7 },
+
+      { size: facing, x: 0.25, z: -3.8 },
+      { size: facing, x: 1.3, z: -3.8 },
+      { size: facing, x: 2.35, z: -3.8 },
+      { size: facing, x: 3.4, z: -3.8 },
+      { size: facingOffset, x: 4.2, z: -3.8 },
+    ]
+
+    const blockData = [
+      { size: facing, x: -0.8, z: -8.5 },
+      { size: facing, x: -1.85, z: -8.5 },
+      { size: facing, x: -2.9, z: -8.5 },
+      { size: facing, x: -3.95, z: -8.5 },
+
+      { size: sides, x: -4.75, z: -7.7 },
+      { size: sides, x: -4.75, z: -6.65 },
+      { size: sides, x: -4.75, z: -5.6 },
+      { size: sides, x: -4.75, z: -4.55 },
+
+      { size: sides, x: -4.75, z: -3.15 },
+      { size: sides, x: -4.75, z: -2.1 },
+      { size: sides, x: -4.75, z: -1.05 },
+      { size: sides, x: -4.75, z: 0 },
+      { size: sides, x: -4.75, z: 1.05 },
+      { size: sides, x: -4.75, z: 2.1 },
+      { size: sides, x: -4.75, z: 3.15 },
+
+      { size: sides, x: -4.75, z: 4.55 },
+      { size: sides, x: -4.75, z: 5.6 },
+      { size: sides, x: -4.75, z: 6.65 },
+      { size: sides, x: -4.75, z: 7.7 },
+
+      { size: facing, x: -3.95, z: 8.5 },
+      { size: facing, x: -2.9, z: 8.5 },
+      { size: facing, x: -1.85, z: 8.5 },
+      { size: facing, x: -0.8, z: 8.5 },
+
+      { size: facing, x: 0.8, z: 8.5 },
+      { size: facing, x: 1.85, z: 8.5 },
+      { size: facing, x: 2.9, z: 8.5 },
+      { size: facing, x: 3.95, z: 8.5 },
+
+      { size: sides, x: 4.75, z: 7.7 },
+      { size: sides, x: 4.75, z: 6.65 },
+      { size: sides, x: 4.75, z: 5.6 },
+      { size: sides, x: 4.75, z: 4.55 },
+
+      { size: sides, x: 4.75, z: 3.15 },
+      { size: sides, x: 4.75, z: 2.1 },
+      { size: sides, x: 4.75, z: 1.05 },
+      { size: sides, x: 4.75, z: 0 },
+      { size: sides, x: 4.75, z: -1.05 },
+      { size: sides, x: 4.75, z: -2.1 },
+      { size: sides, x: 4.75, z: -3.15 },
+    ]
+
+    const windowBlockData = [
+      { size: facing, x: -0.8, z: -8.5 },
+      { size: facing, x: -3.95, z: -8.5 },
+
+      { size: sides, x: -4.75, z: -7.7 },
+      { size: sides, x: -4.75, z: -4.55 },
+
+      { size: sides, x: -4.75, z: -3.15 },
+      { size: sides, x: -4.75, z: 0 },
+      { size: sides, x: -4.75, z: 3.15 },
+
+      { size: sides, x: -4.75, z: 4.55 },
+      { size: sides, x: -4.75, z: 7.7 },
+
+      { size: facing, x: -3.95, z: 8.5 },
+      { size: facing, x: -0.8, z: 8.5 },
+
+      { size: facing, x: 0.8, z: 8.5 },
+      { size: facing, x: 3.95, z: 8.5 },
+
+      { size: sides, x: 4.75, z: 7.7 },
+      { size: sides, x: 4.75, z: 4.55 },
+
+      { size: sides, x: 4.75, z: 3.15 },
+      { size: sides, x: 4.75, z: 0 },
+      { size: sides, x: 4.75, z: -3.15 },
+    ]
+
+    const blockDataOffset = [
+      { size: facingOffset, x: -0.5, z: -8.5 },
+      { size: facing, x: -1.3, z: -8.5 },
+      { size: facing, x: -2.35, z: -8.5 },
+      { size: facing, x: -3.4, z: -8.5 },
+      { size: facingOffset, x: -4.2, z: -8.5 },
+
+      { size: sidesOffset, x: -4.75, z: -8 },
+      { size: sides, x: -4.75, z: -7.2 },
+      { size: sides, x: -4.75, z: -6.15 },
+      { size: sides, x: -4.75, z: -5.1 },
+      { size: sidesOffset, x: -4.75, z: -4.3 },
+
+      { size: sidesOffset, x: -4.75, z: -3.45 },
+      { size: sides, x: -4.75, z: -2.65 },
+      { size: sides, x: -4.75, z: -1.6 },
+      { size: sides, x: -4.75, z: -0.55 },
+      { size: sides, x: -4.75, z: 0.5 },
+      { size: sides, x: -4.75, z: 1.55 },
+      { size: sides, x: -4.75, z: 2.6 },
+      { size: sidesOffset, x: -4.75, z: 3.4 },
+
+      { size: sidesOffset, x: -4.75, z: 4.3 },
+      { size: sides, x: -4.75, z: 5.1 },
+      { size: sides, x: -4.75, z: 6.15 },
+      { size: sides, x: -4.75, z: 7.2 },
+      { size: sidesOffset, x: -4.75, z: 8 },
+
+      { size: facingOffset, x: -4.2, z: 8.5 },
+      { size: facing, x: -3.4, z: 8.5 },
+      { size: facing, x: -2.35, z: 8.5 },
+      { size: facing, x: -1.3, z: 8.5 },
+      { size: facingOffset, x: -0.5, z: 8.5 },
+
+      { size: facingOffset, x: 0.5, z: 8.5 },
+      { size: facing, x: 1.3, z: 8.5 },
+      { size: facing, x: 2.35, z: 8.5 },
+      { size: facing, x: 3.4, z: 8.5 },
+      { size: facingOffset, x: 4.2, z: 8.5 },
+
+      { size: sidesOffset, x: 4.75, z: 8 },
+      { size: sides, x: 4.75, z: 7.2 },
+      { size: sides, x: 4.75, z: 6.15 },
+      { size: sides, x: 4.75, z: 5.1 },
+      { size: sidesOffset, x: 4.75, z: 4.3 },
+
+      { size: sidesOffset, x: 4.75, z: 3.4 },
+      { size: sides, x: 4.75, z: 2.6 },
+      { size: sides, x: 4.75, z: 1.55 },
+      { size: sides, x: 4.75, z: 0.5 },
+      { size: sides, x: 4.75, z: -0.55 },
+      { size: sides, x: 4.75, z: -1.6 },
+      { size: sides, x: 4.75, z: -2.65 },
+      { size: sidesOffset, x: 4.75, z: -3.45 },
+    ]
+
+    const blockTriangleData = [
+      [
+        { size: facing, x: -0.8, z: -8.5 },
+        { size: facing, x: -1.85, z: -8.5 },
+        { size: facing, x: -2.9, z: -8.5 },
+        { size: facing, x: -3.95, z: -8.5 },
+      ],
+      [
+        { size: facingOffset, x: -0.5, z: -8.5 },
+        { size: facing, x: -1.3, z: -8.5 },
+        { size: facing, x: -2.35, z: -8.5 },
+        { size: facing, x: -3.4, z: -8.5 },
+      ],
+      [
+        { size: facing, x: -0.8, z: -8.5 },
+        { size: facing, x: -1.85, z: -8.5 },
+        { size: facing, x: -2.9, z: -8.5 },
+      ],
+      [
+        { size: facingOffset, x: -0.5, z: -8.5 },
+        { size: facing, x: -1.3, z: -8.5 },
+        { size: facing, x: -2.35, z: -8.5 },
+      ],
+      [
+        { size: facing, x: -0.8, z: -8.5 },
+        { size: facing, x: -1.85, z: -8.5 },
+      ],
+      [
+        { size: facingOffset, x: -0.5, z: -8.5 },
+        { size: facing, x: -1.3, z: -8.5 },
+      ],
+      [
+        { size: facing, x: -0.8, z: -8.5 },
+      ],
+      [
+        { size: facingOffset, x: -0.5, z: -8.5 },
+      ]
+    ]
+
+    const blocks = []
+    let blockMat
+    let scene
+    const maxBlocks = 678
+    let numBlocks = 0
+    let percentage = 0
+    const spawnBlock = function(block, y) {
+      if (blocks.length > (percentage * maxBlocks)) return
+
+      const newBlock = BABYLON.MeshBuilder.CreateBox("block", block.size, scene)
+      newBlock.material = blockMat
+      newBlock.position = new BABYLON.Vector3(block.x, y, block.z)
+      blocks.push(newBlock)
+    }
+
+    const buildTwoBlockRows = function(y) {
+      entryBlockData.forEach(block => spawnBlock(block, y))
+      entryBlockDataOffset.forEach(block => spawnBlock(block, y + 0.375))
+      blockData.forEach(block => spawnBlock(block, y))
+      blockDataOffset.forEach(block => spawnBlock(block, y + 0.375))
+    }
+
+    const buildTwoWindowBlockRows = function(y) {
+      entryBlockData.forEach(block => spawnBlock(block, y))
+      entryBlockDataOffset.forEach(block => spawnBlock(block, y + 0.375))
+      windowBlockData.forEach(block => spawnBlock(block, y))
+      windowBlockData.forEach(block => spawnBlock(block, y + 0.375))
+    }
+
+    const buildTriangles = function(startingY) {
+      blockTriangleData.forEach((blockRow, index) => {
+        blockRow.forEach(block => {
+          const y = startingY + index * 0.375
+          spawnBlock(block, y)
+          newBlock = { size: block.size, x: -block.x, z: block.z}
+          spawnBlock(newBlock, y)
+          newBlock = { size: block.size, x: block.x, z: -block.z}
+          spawnBlock(newBlock, y)
+          newBlock = { size: block.size, x: -block.x, z: -block.z}
+          spawnBlock(newBlock, y)
+        })
+      })
+    }
+
+    const canvas = document.getElementById('renderCanvas')
+    const engine = new BABYLON.Engine(canvas, true, {preserveDrawingBuffer: true, stencil: true})
+    const createScene = function() {
+      const scene = new BABYLON.Scene(engine)
+      scene.clearColor = BABYLON.Color3.FromHexString("#1f2b20")
+
+      const camera = new BABYLON.ArcRotateCamera("Camera", 0, 0, 10, new BABYLON.Vector3(0, 0, 0), scene)
+      camera.setPosition(new BABYLON.Vector3(10, 10, -20))
+      camera.attachControl(canvas, true)
+      camera.inputs.remove(camera.inputs.attached.mousewheel)
+
+      const light = new BABYLON.HemisphericLight('light1', new BABYLON.Vector3(0, 1, 0), scene)
+
+      blockMat = new BABYLON.StandardMaterial("myMaterial", scene);
+      blockMat.diffuseColor = BABYLON.Color3.FromHexString("#754633")
+
+      constructFoundations(scene)
+      createGUI()
+
+      return scene;
+    }
+    scene = createScene()
+    engine.runRenderLoop(() => scene.render())
+    window.addEventListener('resize', () => engine.resize())
+
+    fetch('https://api.auctria.com/public/3f924ef4-507f-4a76-91f4-05adabc3667e/state/f7877539-2582-49b9-9f25-d67656cdc40b/46976ec0b10e11ebb06c59bf3d89d6df')
+    .then(response => response.json())
+    .then(data => {
+      numBlocks = Math.floor(data.Total / 5)
+      percentage = data.Total / data.Target
+
+      if (percentage > 0.99) 
+        blocksText.text = "Fully Funded at 4,000 Blocks!"
+      else blocksText.text = `${numBlocks} Blocks Funded`
+
+      buildTwoBlockRows(0.625)
+      buildTwoBlockRows(1.375)
+      buildTwoBlockRows(2.125)
+      buildTwoWindowBlockRows(2.875)
+      buildTwoWindowBlockRows(3.625)
+      buildTwoWindowBlockRows(4.375)
+      buildTwoBlockRows(5.125, scene)
+      buildTriangles(5.875, scene)
+    })
+
+    
+  </script>
+
+</body>
+</html>
